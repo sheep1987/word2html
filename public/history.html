@@ -75,7 +75,7 @@
         // 全局变量
         let allEntries = [];
         let filteredEntries = [];
-        const entriesPerPage = 10;
+        const entriesPerPage = 50;
         let currentPage = 1;
         let fullContentData = []; // 存储包含完整内容的数据
         let selectedEntries = new Set(); // 存储已选择的条目ID
@@ -212,7 +212,7 @@
                             <th>标题</th>
                             <th style="width: 150px;">项目类型</th>
                             <th style="width: 150px;">创建时间</th>
-                            <th style="width: 120px;">操作</th>
+                            <th style="width: 180px;">操作</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -236,6 +236,7 @@
                         <td>${formattedDate}</td>
                         <td class="action-column">
                             <button class="action-btn btn-view" onclick="viewEntry(${entry.id})">查看</button>
+                            <button class="action-btn btn-edit" onclick="editEntry(${entry.id})">编辑</button>
                             <button class="action-btn btn-delete" onclick="showDeleteConfirm(${entry.id})">删除</button>
                         </td>
                     </tr>
@@ -413,6 +414,12 @@
         // 查看详细内容
         function viewEntry(id) {
             window.location.href = `view.html?id=${id}`;
+        }
+        
+        // 编辑条目
+        function editEntry(id) {
+            // 直接跳转到view页面并添加edit=true参数
+            window.location.href = `view.html?id=${id}&edit=true`;
         }
         
         // 显示消息

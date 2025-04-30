@@ -3,16 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TinyMCE 富文本编辑器</title>
-    <!-- 使用本地 TinyMCE -->
-    <script src="tinymce/js/tinymce/tinymce.min.js"></script>
+    <title>FCKEditor Base64图片编辑</title>
     <!-- 引入 CSS 文件 -->
     <link rel="stylesheet" href="css/common.css">
     <link rel="stylesheet" href="css/editor.css">
+    <!-- 调试脚本 -->
+    <script>
+        // 添加调试消息
+        console.log('页面开始加载');
+        window.onload = function() {
+            console.log('页面完成加载');
+        };
+    </script>
 </head>
 <body>
     <div class="container">
-        <h1>TinyMCE 富文本编辑器</h1>
+        <h1>FCKEditor 富文本编辑器</h1>
+        <p class="description">本应用使用Base64编码存储图片，无需外部文件链接</p>
         
         <div class="form-group">
             <label for="title">标题：</label>
@@ -43,7 +50,8 @@
         
         <div class="form-group">
             <label for="editor">内容：</label>
-            <textarea id="editor"></textarea>
+            <textarea id="editor" name="editor" style="display:none">初始内容...</textarea>
+            <div id="editorDiv" style="width:100%;height:450px;"></div>
         </div>
         
         <div class="btn-container">
@@ -67,15 +75,29 @@
         </div>
     </div>
 
+    <!-- 引入 FCKEditor -->
+    <script src="fckeditor/fckeditor.js"></script>
+    
+    <!-- 再引入应用脚本 -->
     <script>
         // 全局变量
         let allContents = [];
         let currentContentId = '';
+        let oFCKeditor = null; // 存储编辑器实例
         
         // 页面加载完成后获取数据
         document.addEventListener('DOMContentLoaded', function() {
-            // 初始化 TinyMCE
-            initTinyMCE();
+            console.log('DOM内容加载完成');
+            
+            // 检查FCKEditor是否可用
+            if (typeof FCKeditor === 'undefined') {
+                console.error('FCKEditor未加载!');
+                showMessage('富文本编辑器加载失败，请刷新页面重试', 'error');
+                return;
+            }
+            
+            // 初始化编辑器
+            initEditor();
             
             // 加载已保存的内容列表
             loadContentList();
@@ -102,21 +124,71 @@
             setupDeleteButton();
         });
         
-        // 初始化 TinyMCE
-        function initTinyMCE() {
-            tinymce.init({
-                selector: '#editor',
-                height: 450,
-                plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
-                toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
-                language: 'zh_CN', // 中文界面
-                language_url: '/tinymce/langs/zh_CN.js', // 指定中文语言包路径
-                branding: false,    // 移除 TinyMCE 品牌
-                menubar: true,      // 显示菜单栏
-                statusbar: true,    // 显示状态栏
-                resize: true,       // 允许调整大小
-                skin: 'oxide',      // 使用默认皮肤
-            });
+        // 初始化编辑器
+        function initEditor() {
+            try {
+                console.log('初始化FCKEditor...');
+                
+                // 初始化 FCKEditor
+                oFCKeditor = new FCKeditor('editor');
+                oFCKeditor.BasePath = 'fckeditor/';
+                oFCKeditor.Height = 450;
+                oFCKeditor.ToolbarSet = 'Default';
+                oFCKeditor.Value = '初始内容...';
+                oFCKeditor.ReplaceTextarea();
+                
+                console.log('FCKEditor初始化调用完成');
+            } catch (error) {
+                console.error('初始化FCKEditor时出错:', error);
+                showMessage('富文本编辑器初始化出错: ' + error.message, 'error');
+            }
+        }
+        
+        // 获取编辑器内容
+        function getEditorContent() {
+            try {
+                console.log('尝试获取编辑器内容');
+                if (typeof FCKeditorAPI === 'undefined') {
+                    console.error('FCKeditorAPI未定义');
+                    return '';
+                }
+                
+                const editor = FCKeditorAPI.GetInstance('editor');
+                if (!editor) {
+                    console.error('无法获取编辑器实例');
+                    return '';
+                }
+                
+                const content = editor.GetHTML();
+                console.log('成功获取编辑器内容，长度:', content.length);
+                return content;
+            } catch (error) {
+                console.error('获取编辑器内容失败:', error);
+                return '';
+            }
+        }
+        
+        // 设置编辑器内容
+        function setEditorContent(content) {
+            try {
+                console.log('尝试设置编辑器内容，内容长度:', (content || '').length);
+                
+                if (typeof FCKeditorAPI === 'undefined') {
+                    console.error('FCKeditorAPI未定义');
+                    return;
+                }
+                
+                const editor = FCKeditorAPI.GetInstance('editor');
+                if (!editor) {
+                    console.error('无法获取编辑器实例');
+                    return;
+                }
+                
+                editor.SetHTML(content || '');
+                console.log('编辑器内容设置成功');
+            } catch (error) {
+                console.error('设置编辑器内容失败:', error);
+            }
         }
         
         // 加载内容列表
@@ -183,7 +255,7 @@
                         }
                         
                         // 设置编辑器内容
-                        tinymce.get('editor').setContent(data.data.content);
+                        setEditorContent(data.data.content);
                     } else {
                         showMessage('获取内容失败: ' + data.message, 'error');
                     }
@@ -197,7 +269,7 @@
         function clearForm() {
             document.getElementById('title').value = '';
             document.getElementById('projectType').selectedIndex = 0;
-            tinymce.get('editor').setContent('');
+            setEditorContent('');
         }
         
         // 设置删除按钮
@@ -269,7 +341,7 @@
         document.getElementById('saveButton').addEventListener('click', function() {
             const title = document.getElementById('title').value;
             const projectType = document.getElementById('projectType').value;
-            const content = tinymce.get('editor').getContent();
+            const content = getEditorContent();
             
             if (!title.trim()) {
                 showMessage('请输入标题', 'error');
