@@ -48,10 +48,10 @@
             </select>
         </div>
         
-        <div class="form-group">
+        <div class="form-group editor-group">
             <label for="editor">内容：</label>
             <textarea id="editor" name="editor" style="display:none">初始内容...</textarea>
-            <div id="editorDiv" style="width:100%;height:450px;"></div>
+            <div id="editorDiv" style="width:100%;height:500px;"></div>
         </div>
         
         <div class="btn-container">
@@ -132,7 +132,7 @@
                 // 初始化 FCKEditor
                 oFCKeditor = new FCKeditor('editor');
                 oFCKeditor.BasePath = 'fckeditor/';
-                oFCKeditor.Height = 450;
+                oFCKeditor.Height = 500;
                 oFCKeditor.ToolbarSet = 'Default';
                 oFCKeditor.Value = '初始内容...';
                 oFCKeditor.ReplaceTextarea();
